@@ -5,6 +5,6 @@ struct a{
   ~a(){std::cout<<"destory"<<std::endl;}
 };
 int main(){
-  cpp::SharedPointer<a[]> p(new a[10]);
+  cpp::SharedPointer<a[]> p = cpp::MakeShared<a>(10);
   return 0;
 }

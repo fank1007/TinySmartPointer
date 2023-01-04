@@ -1,11 +1,14 @@
 #ifndef SHARED_PTR_H_
 #define SHARED_PTR_H_
 
+#include<utility>
+
 namespace cpp{
 
 template<typename T>
 class SharedPointer{
  public:
+
   SharedPointer() : pointer_(nullptr),user_count_(nullptr) {}
 
   explicit SharedPointer(T* pointer) : pointer_(pointer),user_count_(new int(1)) {}
@@ -28,7 +31,8 @@ class SharedPointer{
   ~SharedPointer(){
     if (user_count_ != nullptr) {
       --(*user_count_);
-    } else if (user_count_ == nullptr || *user_count_ == 0) {
+    }
+    if (user_count_ == nullptr || *user_count_ == 0) {
      delete pointer_;
      delete user_count_;
      pointer_ = nullptr;
@@ -224,6 +228,16 @@ void SharedPointer<T[]>::Reset(T* pointer){
     --(*user_count_);
     user_count_ = new int(1);
   }
+}
+
+template<typename T, typename... Args>
+SharedPointer<T> MakeShared(Args... args) {
+  return SharedPointer<T>(new T(std::forward(args)...));
+}
+
+template<typename T>
+SharedPointer<T[]> MakeShared(int size) {
+  return SharedPointer<T[]>(new T[size]);
 }
 
 } //namespace cpp
