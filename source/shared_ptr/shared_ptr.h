@@ -231,8 +231,8 @@ void SharedPointer<T[]>::Reset(T* pointer){
 }
 
 template<typename T, typename... Args>
-SharedPointer<T> MakeShared(Args... args) {
-  return SharedPointer<T>(new T(std::forward(args)...));
+SharedPointer<T> MakeShared(Args&&... args) {
+  return SharedPointer<T>(new T(std::forward<Args>(args)...));
 }
 
 template<typename T>
