@@ -58,6 +58,8 @@ class SharedPointer{
     move.pointer_ = nullptr;
     move.user_count_ = nullptr;
   }
+
+  
   /**
    * @brief 析构函数
    * 
@@ -75,6 +77,8 @@ class SharedPointer{
      user_count_ = nullptr;
     }
   }
+
+
   /**
    * @brief 拷贝赋值运算符
    * 
@@ -136,6 +140,8 @@ class SharedPointer{
   int user_count() {
    return (*user_count_);
   }
+
+
   /**
    * @brief 查看是否只有一个智能指针管理该资源
    * 
@@ -149,6 +155,8 @@ class SharedPointer{
       return true;
     }
   }
+
+
   /**
    * @brief 返回指针指向的对象
    * 
@@ -181,6 +189,8 @@ class SharedPointer{
       return true;
     }
   }
+
+
   /**
    * @brief 重新设置指针
    * 
@@ -188,6 +198,7 @@ class SharedPointer{
    * 
    */
   void Reset(T*);
+
  private:
   T* pointer_;
   int* user_count_;
