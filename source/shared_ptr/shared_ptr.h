@@ -66,11 +66,11 @@ class SharedPointer{
   }
 
   int user_count() {
-   return (*user_count);
+   return (*user_count_);
   }
 
   bool Unique() {
-    if (*user_count != 1 || user_count_ == nullptr) {
+    if (*user_count_ != 1 || user_count_ == nullptr) {
       return false;
     } else {
       return true;
@@ -163,7 +163,7 @@ class SharedPointer<T[]>{
   }
 
   bool Unique() {
-    if (*user_count != 1 || user_count_ == nullptr) {
+    if (*user_count_ != 1 || user_count_ == nullptr) {
       return false;
     } else {
       return true;
@@ -199,7 +199,7 @@ class SharedPointer<T[]>{
 
 
 template<typename T>
-void SharedPointer<T>::Reset(T* pointer){
+void SharedPointer<T>::Reset(T* pointer) {
   if (*user_count_ == 1) {
     auto p = pointer_;
     pointer_ = pointer;
@@ -215,7 +215,7 @@ void SharedPointer<T>::Reset(T* pointer){
 }
 
 template<typename T>
-void SharedPointer<T[]>::Reset(T* pointer){
+void SharedPointer<T[]>::Reset(T* pointer) {
   if (*user_count_ == 1) {
     auto p = pointer_;
     pointer_ = pointer;
@@ -232,12 +232,12 @@ void SharedPointer<T[]>::Reset(T* pointer){
 
 template<typename T, typename... Args>
 SharedPointer<T> MakeShared(Args&&... args) {
-  return SharedPointer<T>(new T(std::forward<Args>(args)...));
+  return std::move(SharedPointer<T>(new T(std::forward<Args>(args)...)));
 }
 
 template<typename T>
 SharedPointer<T[]> MakeShared(int size) {
-  return SharedPointer<T[]>(new T[size]);
+  return std::move(SharedPointer<T[]>(new T[size]));
 }
 
 } //namespace cpp
