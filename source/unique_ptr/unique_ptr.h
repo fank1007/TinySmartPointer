@@ -212,6 +212,7 @@ class UniquePointer<T[]>{
 
  private:
   T* pointer_;
+  std::mutex mutex_;
 
 };
 
