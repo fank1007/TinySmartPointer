@@ -21,13 +21,13 @@ class SharedPointer{
    * @brief 默认构造函数
    * 
    */
-  SharedPointer() : pointer_(nullptr),user_count_(nullptr) {}
+  SharedPointer() : pointer_(nullptr), user_count_(nullptr) {}
   /**
    * @brief 构造函数
    * 
    * @param pointer {T*}   智能指针内存放的资源
    */
-  explicit SharedPointer(T* pointer) : pointer_(pointer),user_count_(new int(1)) {}
+  explicit SharedPointer(T* pointer) : pointer_(pointer), user_count_(new int(1)) {}
 
   /**
    * @brief 拷贝构造函数
@@ -214,9 +214,9 @@ class SharedPointer{
 template<typename T>
 class SharedPointer<T[]>{
  public:
-  SharedPointer() : pointer_(nullptr),user_count_(nullptr) {}
+  SharedPointer() : pointer_(nullptr), user_count_(nullptr) {}
 
-  explicit SharedPointer(T* pointer) : pointer_(pointer),user_count_(new int(1)) {}
+  explicit SharedPointer(T* pointer) : pointer_(pointer), user_count_(new int(1)) {}
 
   SharedPointer(const SharedPointer& copy)
       :pointer_(copy.pointer_),
