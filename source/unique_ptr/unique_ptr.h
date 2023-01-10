@@ -123,7 +123,6 @@ class UniquePointer {
 
  private:
   std::atomic<T*> pointer_;
-
 };
 
 /**

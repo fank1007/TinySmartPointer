@@ -1,8 +1,8 @@
 #ifndef SHARED_PTR_H_
 #define SHARED_PTR_H_
 
-#include <utility>
 #include <atomic>
+#include <utility>
 
 namespace cpp {
 
