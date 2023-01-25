@@ -2,8 +2,14 @@ cmake_minimum_required(VERSION 3.5)
 
 project(TinySmartPointer)
 
-set(source ${CMAKE_SOURCE_DIR}/source)
+include_directories(googletest/googletest/include)
 
-set(EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/build/out)
+enable_testing()
 
-add_subdirectory(source)
+include_directories(source)
+
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+add_subdirectory(googletest)
+
+add_subdirectory(test)

@@ -43,12 +43,12 @@ class UniquePointer {
    *
    * @param move {Unique&&} 被移动的对象
    */
-  UniquePointer(UniquePointer&& move) : pointer_(move.pointer_.load()) {
+  UniquePointer(UniquePointer&& move) : pointer_(move.pointer_) {
     move.pointer_ = nullptr;
   }
 
   ~UniquePointer() {
-    delete pointer_.load();
+    delete pointer_;
     pointer_ = nullptr;
   }
 
@@ -70,9 +70,10 @@ class UniquePointer {
    */
   UniquePointer& operator=(UniquePointer&& move) {
     if (&move != this) {
-      pointer_ = move.pointer_.load();
+      pointer_ = move.pointer_;
       move.pointer_ = nullptr;
     }
+    return *this;
   }
 
   /**
@@ -103,11 +104,7 @@ class UniquePointer {
    * @return false 反之
    */
   explicit operator bool() {
-    if (pointer_ == nullptr) {
-      return false;
-    } else {
-      return true;
-    }
+    return pointer_ != nullptr;
   }
 
   /**
@@ -116,13 +113,13 @@ class UniquePointer {
    * @param pointer 存入的新资源
    */
   void Reset(T* pointer) {
-    auto p = pointer_.load();
+    auto p = pointer_;
     pointer_ = pointer;
     delete p;
   }
 
  private:
-  std::atomic<T*> pointer_;
+  T* pointer_;
 };
 
 /**
@@ -139,11 +136,11 @@ class UniquePointer<T[]> {
 
   UniquePointer(const UniquePointer& copy) = delete;
 
-  UniquePointer(UniquePointer&& move) : pointer_(move.pointer_.load()) {
+  UniquePointer(UniquePointer&& move) : pointer_(move.pointer_) {
     move.pointer_ = nullptr;
   }
   ~UniquePointer() {
-    delete[] pointer_.load();
+    delete[] pointer_;
     pointer_ = nullptr;
   }
 
@@ -151,9 +148,10 @@ class UniquePointer<T[]> {
 
   UniquePointer& operator=(UniquePointer&& move) {
     if (&move != this) {
-      pointer_ = move.pointer_.load();
+      pointer_ = move.pointer_;
       move.pointer_ = nullptr;
     }
+    return *this;
   }
 
   T operator*() { return *pointer_; }
@@ -165,21 +163,17 @@ class UniquePointer<T[]> {
   T operator[](int index) { return pointer_[index]; }
 
   explicit operator bool() {
-    if (pointer_ == nullptr) {
-      return false;
-    } else {
-      return true;
-    }
+    return pointer_ != nullptr;
   }
 
   void Reset(T* pointer) {
-    auto p = pointer_.load();
+    auto p = pointer_;
     pointer_ = pointer;
     delete[] p;
   }
 
  private:
-  std::atomic<T*> pointer_;
+  T* pointer_;
 };
 
 /**
@@ -193,18 +187,6 @@ class UniquePointer<T[]> {
 template <typename T, typename... Args>
 UniquePointer<T> MakeUnique(Args&&... args) {
   return std::move(UniquePointer<T>(new T(std::forward<Args>(args)...)));
-}
-
-/**
- * @brief 构造一个智能指针并返回
- *
- * @tparam T 智能指针存放指针的类型
- * @param size 数组的大小
- * @return UniquePointer<T[]> 返回一个智能指针
- */
-template <typename T>
-UniquePointer<T[]> MakeUnique(int size) {
-  return std::move(UniquePointer<T[]>(new T[size]));
 }
 
 }  // namespace cpp

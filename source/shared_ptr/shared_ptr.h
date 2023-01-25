@@ -37,7 +37,7 @@ class SharedPointer {
    * @param copy {const SharedPointer&} 被拷贝的对象
    */
   SharedPointer(const SharedPointer& copy)
-      : pointer_(copy.pointer_.load()), user_count_(copy.user_count_.load()) {
+      : pointer_(copy.pointer_), user_count_(copy.user_count_) {
     if (user_count_ != nullptr) {
       ++(*user_count_);
     }
@@ -51,7 +51,7 @@ class SharedPointer {
    * @param move {SharedPointer&&} 被移动的对象
    */
   SharedPointer(SharedPointer&& move)
-      : pointer_(move.pointer_.load()), user_count_(move.user_count_.load()) {
+      : pointer_(move.pointer_), user_count_(move.user_count_) {
     move.pointer_ = nullptr;
     move.user_count_ = nullptr;
   }
@@ -67,8 +67,8 @@ class SharedPointer {
       --(*user_count_);
     }
     if (user_count_ == nullptr || *user_count_ == 0) {
-      delete pointer_.load();
-      delete user_count_.load();
+      delete pointer_;
+      delete user_count_;
       pointer_ = nullptr;
       user_count_ = nullptr;
     }
@@ -83,15 +83,7 @@ class SharedPointer {
    * @param copy {const SharedPointer&} 被拷贝的对象
    * @return SharedPointer& 返回 *this
    */
-  SharedPointer& operator=(const SharedPointer& copy) {
-    if (&copy != this) {
-      pointer_ = copy.pointer_.load();
-      user_count_ = copy.user_count_.load();
-      ++(*user_count_);
-      return *this;
-    }
-    return *this;
-  }
+  SharedPointer& operator=(const SharedPointer&);
 
   /**
    * @brief 移动赋值运算符
@@ -102,16 +94,7 @@ class SharedPointer {
    * @param move {SharedPointer&&} 被移动的对象
    * @return SharedPointer&  返回 *this
    */
-  SharedPointer& operator=(SharedPointer&& move) {
-    if (&move != this) {
-      pointer_ = move.pointer_.load();
-      user_count_ = move.user_count_.load();
-      move.pointer_ = nullptr;
-      move.user_count_ = nullptr;
-      return *this;
-    }
-    return *this;
-  }
+  SharedPointer& operator=(SharedPointer&&);
 
   /**
    * @brief 返回存放的指针
@@ -125,7 +108,13 @@ class SharedPointer {
    *
    * @return int 返回当前指针的计数
    */
-  int user_count() { return (*user_count_); }
+  int user_count() {
+    if (user_count_ != nullptr) {
+      return *user_count_;
+    } else {
+      return 0;
+    }
+  }
 
   /**
    * @brief 查看是否只有一个智能指针管理该资源
@@ -161,13 +150,7 @@ class SharedPointer {
    * @return true 该指针为空
    * @return false 反之
    */
-  explicit operator bool() {
-    if (pointer_ == nullptr) {
-      return false;
-    } else {
-      return true;
-    }
-  }
+  explicit operator bool() { return pointer_ != nullptr; }
 
   /**
    * @brief 重新设置指针
@@ -178,8 +161,8 @@ class SharedPointer {
   void Reset(T*);
 
  private:
-  std::atomic<T*> pointer_;
-  std::atomic<int*> user_count_;
+  T* pointer_;
+  int* user_count_;
 };
 
 /**
@@ -196,14 +179,14 @@ class SharedPointer<T[]> {
       : pointer_(pointer), user_count_(new int(1)) {}
 
   SharedPointer(const SharedPointer& copy)
-      : pointer_(copy.pointer_.load()), user_count_(copy.user_count_.load()) {
+      : pointer_(copy.pointer_), user_count_(copy.user_count_) {
     if (user_count_ != nullptr) {
       ++(*user_count_);
     }
   }
 
   SharedPointer(SharedPointer&& move)
-      : pointer_(move.pointer_.load()), user_count_(move.user_count_.load()) {
+      : pointer_(move.pointer_), user_count_(move.user_count_) {
     move.pointer_ = nullptr;
     move.user_count_ = nullptr;
   }
@@ -213,37 +196,25 @@ class SharedPointer<T[]> {
       --(*user_count_);
     }
     if (user_count_ == nullptr || *user_count_ == 0) {
-      delete[] pointer_.load();
-      delete user_count_.load();
+      delete[] pointer_;
+      delete user_count_;
       pointer_ = nullptr;
       user_count_ = nullptr;
     }
   }
 
-  SharedPointer& operator=(const SharedPointer& copy) {
-    if (&copy != this) {
-      pointer_ = copy.pointer_.load();
-      user_count_ = copy.user_count_.load();
-      ++(*user_count_);
-      return *this;
-    }
-    return *this;
-  }
-
-  SharedPointer& operator=(SharedPointer&& move) {
-    if (&move != this) {
-      pointer_ = move.pointer_.load();
-      user_count_ = move.user_count_.load();
-      move.pointer_ = nullptr;
-      move.user_count_ = nullptr;
-      return *this;
-    }
-    return *this;
-  }
+  SharedPointer& operator=(const SharedPointer&);
+  SharedPointer& operator=(SharedPointer&&);
 
   T* pointer() { return pointer_; }
 
-  int user_count() { return (*user_count); }
+  int user_count() {
+    if (user_count_ != nullptr) {
+      return *user_count_;
+    } else {
+      return 0;
+    }
+  }
 
   bool Unique() {
     if (*user_count_ != 1 || user_count_ == nullptr) {
@@ -270,14 +241,98 @@ class SharedPointer<T[]> {
   void Reset(T*);
 
  private:
-  std::atomic<T*> pointer_;
-  std::atomic<int*> user_count_;
+  T* pointer_;
+  int* user_count_;
 };
+
+template <typename T>
+SharedPointer<T>& SharedPointer<T>::operator=(const SharedPointer& copy) {
+  if (&copy != this) {
+    if (this->pointer_ == nullptr) {
+      pointer_ = copy.pointer_;
+      user_count_ = copy.user_count_;
+      if (user_count_ != nullptr) ++(*user_count_);
+      return *this;
+    } else {
+      delete pointer_;
+      delete user_count_;
+      pointer_ = copy.pointer_;
+      user_count_ = copy.user_count_;
+      if (user_count_ != nullptr) ++(*user_count_);
+      return *this;
+    }
+  }
+  return *this;
+}
+
+template <typename T>
+SharedPointer<T>& SharedPointer<T>::operator=(SharedPointer&& move) {
+  if (&move != this) {
+    if (this->pointer_ == nullptr) {
+      pointer_ = move.pointer_;
+      user_count_ = move.user_count_;
+      move.pointer_ = nullptr;
+      move.user_count_ = nullptr;
+      return *this;
+    } else {
+      delete pointer_;
+      delete user_count_;
+      pointer_ = move.pointer_;
+      user_count_ = move.user_count_;
+      move.pointer_ = nullptr;
+      move.user_count_ = nullptr;
+      return *this;
+    }
+  }
+  return *this;
+}
+
+template <typename T>
+SharedPointer<T[]>& SharedPointer<T[]>::operator=(const SharedPointer& copy) {
+  if (&copy != this) {
+    if (this->pointer_ == nullptr) {
+      pointer_ = copy.pointer_;
+      user_count_ = copy.user_count_;
+      if (user_count_ != nullptr) ++(*user_count_);
+      return *this;
+    } else {
+      delete[] pointer_;
+      delete user_count_;
+      pointer_ = copy.pointer_;
+      user_count_ = copy.user_count_;
+      if (user_count_ != nullptr) ++(*user_count_);
+      return *this;
+    }
+  }
+  return *this;
+}
+
+template <typename T>
+SharedPointer<T[]>& SharedPointer<T[]>::operator=(SharedPointer&& move) {
+  if (&move != this) {
+    if (this->pointer_ == nullptr) {
+      pointer_ = move.pointer_;
+      user_count_ = move.user_count_;
+      move.pointer_ = nullptr;
+      move.user_count_ = nullptr;
+      return *this;
+    } else {
+      delete[] pointer_;
+      delete user_count_;
+      pointer_ = move.pointer_;
+      user_count_ = move.user_count_;
+      move.pointer_ = nullptr;
+      move.user_count_ = nullptr;
+      return *this;
+    }
+  }
+  return *this;
+}
 
 template <typename T>
 void SharedPointer<T>::Reset(T* pointer) {
   if (*user_count_ == 1) {
-    auto temp = pointer_.load();
+    auto temp = pointer_;
     pointer_ = pointer;
     delete temp;
   } else if (user_count_ == nullptr) {
@@ -293,7 +348,7 @@ void SharedPointer<T>::Reset(T* pointer) {
 template <typename T>
 void SharedPointer<T[]>::Reset(T* pointer) {
   if (*user_count_ == 1) {
-    auto temp = pointer_.load();
+    auto temp = pointer_;
     pointer_ = pointer;
     delete[] temp;
   } else if (user_count_ == nullptr) {
@@ -319,18 +374,6 @@ SharedPointer<T> MakeShared(Args&&... args) {
   return SharedPointer<T>(new T(std::forward<Args>(args)...));
 }
 
-/**
- * @brief 构造一个智能指针并返回
- *
- * @tparam T 智能指针存放指针的类型
- * @param size 数组的大小
- * @return SharedPointer<T[]> 返回一个智能指针
- */
-template <typename T>
-SharedPointer<T[]> MakeShared(int size) {
-  return SharedPointer<T[]>(new T[size]);
-}
+} /* namespace cpp */
 
-}  // namespace cpp
-
-#endif  // SHARED_PTR_H_
+#endif /* SHARED_PTR_H_ */
