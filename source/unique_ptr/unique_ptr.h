@@ -68,13 +68,7 @@ class UniquePointer {
    * @param move {Unique&&} 被移动的对象
    * @return UniquePointer& 返回 *this
    */
-  UniquePointer& operator=(UniquePointer&& move) {
-    if (&move != this) {
-      pointer_ = move.pointer_;
-      move.pointer_ = nullptr;
-    }
-    return *this;
-  }
+  UniquePointer& operator=(UniquePointer&&);
 
   /**
    * @brief 返回存放的指针
@@ -103,9 +97,7 @@ class UniquePointer {
    * @return true 该指针为空
    * @return false 反之
    */
-  explicit operator bool() {
-    return pointer_ != nullptr;
-  }
+  explicit operator bool() { return pointer_ != nullptr; }
 
   /**
    * @brief 销毁原资源，存入新资源
@@ -146,13 +138,7 @@ class UniquePointer<T[]> {
 
   UniquePointer& operator=(const UniquePointer& copy) = delete;
 
-  UniquePointer& operator=(UniquePointer&& move) {
-    if (&move != this) {
-      pointer_ = move.pointer_;
-      move.pointer_ = nullptr;
-    }
-    return *this;
-  }
+  UniquePointer& operator=(UniquePointer&&);
 
   T operator*() { return *pointer_; }
 
@@ -162,9 +148,7 @@ class UniquePointer<T[]> {
 
   T operator[](int index) { return pointer_[index]; }
 
-  explicit operator bool() {
-    return pointer_ != nullptr;
-  }
+  explicit operator bool() { return pointer_ != nullptr; }
 
   void Reset(T* pointer) {
     auto p = pointer_;
@@ -175,6 +159,39 @@ class UniquePointer<T[]> {
  private:
   T* pointer_;
 };
+template <typename T>
+UniquePointer<T>& UniquePointer<T>::operator=(UniquePointer&& move) {
+  if (&move != this) {
+    if (this->pointer_ == nullptr) {
+      pointer_ = move.pointer_;
+      move.pointer_ = nullptr;
+      return *this;
+    } else {
+      delete pointer_;
+      pointer_ = move.pointer_;
+      move.pointer_ = nullptr;
+      return *this;
+    }
+  }
+  return *this;
+}
+
+template <typename T>
+UniquePointer<T[]>& UniquePointer<T[]>::operator=(UniquePointer&& move) {
+  if (&move != this) {
+    if (this->pointer_ == nullptr) {
+      pointer_ = move.pointer_;
+      move.pointer_ = nullptr;
+      return *this;
+    } else {
+      delete[] pointer_;
+      pointer_ = move.pointer_;
+      move.pointer_ = nullptr;
+      return *this;
+    }
+  }
+  return *this;
+}
 
 /**
  * @brief 构造一个智能指针并返回
