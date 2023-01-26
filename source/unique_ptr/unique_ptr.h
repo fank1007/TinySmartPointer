@@ -1,7 +1,6 @@
 #ifndef UNIQUE_PTR_H_
 #define UNIQUE_PTR_H_
 
-#include <atomic>
 #include <utility>
 
 namespace cpp {
