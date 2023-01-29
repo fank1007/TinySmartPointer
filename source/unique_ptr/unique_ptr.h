@@ -88,7 +88,7 @@ class UniquePointer {
    *
    * @return T* 返回存放的指针
    */
-  T* pointer() { return pointer_; }
+  T* Get() { return pointer_; }
 
   /**
    * @brief 判断该指针是否为空
@@ -107,6 +107,14 @@ class UniquePointer {
     auto p = pointer_;
     pointer_ = pointer;
     delete p;
+  }
+  /**
+   * @brief 销毁资源
+   *
+   */
+  void Reset(){
+    delete pointer_;
+    pointer_ = nullptr;
   }
 
  private:
@@ -143,7 +151,7 @@ class UniquePointer<T[]> {
 
   T* operator->() { return pointer_; }
 
-  T* pointer() { return pointer_; }
+  T* Get() { return pointer_; }
 
   T operator[](int index) { return pointer_[index]; }
 
@@ -153,6 +161,11 @@ class UniquePointer<T[]> {
     auto p = pointer_;
     pointer_ = pointer;
     delete[] p;
+  }
+
+  void Reset(){
+    delete[] pointer_;
+    pointer_ = nullptr;
   }
 
  private:

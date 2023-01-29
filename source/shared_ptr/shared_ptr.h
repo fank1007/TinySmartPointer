@@ -100,7 +100,7 @@ class SharedPointer {
    *
    * @return T* 返回存放的指针
    */
-  T* pointer() { return pointer_; }
+  T* Get() { return pointer_; }
 
   /**
    * @brief 返回当前指针的计数
@@ -159,6 +159,14 @@ class SharedPointer {
    */
   void Reset(T*);
 
+  /**
+   * @brief 释放该指针的资源
+   *
+   * 在计数为1的时候释放原资源，否则计数减1
+   *
+   */
+  void Reset();
+
  private:
   T* pointer_;
   int* user_count_;
@@ -205,7 +213,7 @@ class SharedPointer<T[]> {
   SharedPointer& operator=(const SharedPointer&);
   SharedPointer& operator=(SharedPointer&&);
 
-  T* pointer() { return pointer_; }
+  T* Get() { return pointer_; }
 
   int user_count() {
     if (user_count_ != nullptr) {
@@ -239,6 +247,8 @@ class SharedPointer<T[]> {
 
   void Reset(T*);
 
+  void Reset();
+
  private:
   T* pointer_;
   int* user_count_;
@@ -247,17 +257,25 @@ class SharedPointer<T[]> {
 template <typename T>
 SharedPointer<T>& SharedPointer<T>::operator=(const SharedPointer& copy) {
   if (&copy != this) {
-    if (this->pointer_ == nullptr) {
-      pointer_ = copy.pointer_;
-      user_count_ = copy.user_count_;
-      if (user_count_ != nullptr) ++(*user_count_);
-      return *this;
+    if (user_count_ != nullptr) {
+      if (*user_count_ == 1) {
+        delete pointer_;
+        delete user_count_;
+        pointer_ = copy.pointer_;
+        user_count_ = copy.user_count_;
+        ++(*user_count_);
+        return *this;
+      } else {
+        --(*user_count_);
+        pointer_ = copy.pointer_;
+        user_count_ = copy.user_count_;
+        ++(*user_count_);
+        return *this;
+      }
     } else {
-      delete pointer_;
-      delete user_count_;
       pointer_ = copy.pointer_;
       user_count_ = copy.user_count_;
-      if (user_count_ != nullptr) ++(*user_count_);
+      ++(*user_count_);
       return *this;
     }
   }
@@ -267,15 +285,24 @@ SharedPointer<T>& SharedPointer<T>::operator=(const SharedPointer& copy) {
 template <typename T>
 SharedPointer<T>& SharedPointer<T>::operator=(SharedPointer&& move) {
   if (&move != this) {
-    if (this->pointer_ == nullptr) {
-      pointer_ = move.pointer_;
-      user_count_ = move.user_count_;
-      move.pointer_ = nullptr;
-      move.user_count_ = nullptr;
-      return *this;
+    if (user_count_ != nullptr) {
+      if (*user_count_ == 1) {
+        delete pointer_;
+        delete user_count_;
+        pointer_ = move.pointer_;
+        user_count_ = move.user_count_;
+        move.pointer_ = nullptr;
+        move.user_count_ = nullptr;
+        return *this;
+      } else {
+        --(*user_count_);
+        pointer_ = move.pointer_;
+        user_count_ = move.user_count_;
+        move.pointer_ = nullptr;
+        move.user_count_ = nullptr;
+        return *this;
+      }
     } else {
-      delete pointer_;
-      delete user_count_;
       pointer_ = move.pointer_;
       user_count_ = move.user_count_;
       move.pointer_ = nullptr;
@@ -289,17 +316,25 @@ SharedPointer<T>& SharedPointer<T>::operator=(SharedPointer&& move) {
 template <typename T>
 SharedPointer<T[]>& SharedPointer<T[]>::operator=(const SharedPointer& copy) {
   if (&copy != this) {
-    if (this->pointer_ == nullptr) {
-      pointer_ = copy.pointer_;
-      user_count_ = copy.user_count_;
-      if (user_count_ != nullptr) ++(*user_count_);
-      return *this;
+    if (user_count_ != nullptr) {
+      if (*user_count_ == 1) {
+        delete[] pointer_;
+        delete user_count_;
+        pointer_ = copy.pointer_;
+        user_count_ = copy.user_count_;
+        ++(*user_count_);
+        return *this;
+      } else {
+        --(*user_count_);
+        pointer_ = copy.pointer_;
+        user_count_ = copy.user_count_;
+        ++(*user_count_);
+        return *this;
+      }
     } else {
-      delete[] pointer_;
-      delete user_count_;
       pointer_ = copy.pointer_;
       user_count_ = copy.user_count_;
-      if (user_count_ != nullptr) ++(*user_count_);
+      ++(*user_count_);
       return *this;
     }
   }
@@ -309,15 +344,24 @@ SharedPointer<T[]>& SharedPointer<T[]>::operator=(const SharedPointer& copy) {
 template <typename T>
 SharedPointer<T[]>& SharedPointer<T[]>::operator=(SharedPointer&& move) {
   if (&move != this) {
-    if (this->pointer_ == nullptr) {
-      pointer_ = move.pointer_;
-      user_count_ = move.user_count_;
-      move.pointer_ = nullptr;
-      move.user_count_ = nullptr;
-      return *this;
+    if (user_count_ != nullptr) {
+      if (*user_count_ == 1) {
+        delete[] pointer_;
+        delete user_count_;
+        pointer_ = move.pointer_;
+        user_count_ = move.user_count_;
+        move.pointer_ = nullptr;
+        move.user_count_ = nullptr;
+        return *this;
+      } else {
+        --(*user_count_);
+        pointer_ = move.pointer_;
+        user_count_ = move.user_count_;
+        move.pointer_ = nullptr;
+        move.user_count_ = nullptr;
+        return *this;
+      }
     } else {
-      delete[] pointer_;
-      delete user_count_;
       pointer_ = move.pointer_;
       user_count_ = move.user_count_;
       move.pointer_ = nullptr;
@@ -330,33 +374,67 @@ SharedPointer<T[]>& SharedPointer<T[]>::operator=(SharedPointer&& move) {
 
 template <typename T>
 void SharedPointer<T>::Reset(T* pointer) {
-  if (*user_count_ == 1) {
-    auto temp = pointer_;
-    pointer_ = pointer;
-    delete temp;
-  } else if (user_count_ == nullptr) {
-    pointer_ = pointer;
-    user_count_ = new int(1);
+  if (user_count_ != nullptr) {
+    if (*user_count_ == 1) {
+      delete pointer_;
+      pointer_ = pointer;
+    } else {
+      --(*user_count_);
+      pointer_ = pointer;
+      user_count_ = new int(1);
+    }
   } else {
     pointer_ = pointer;
-    --(*user_count_);
     user_count_ = new int(1);
   }
 }
 
 template <typename T>
 void SharedPointer<T[]>::Reset(T* pointer) {
-  if (*user_count_ == 1) {
-    auto temp = pointer_;
-    pointer_ = pointer;
-    delete[] temp;
-  } else if (user_count_ == nullptr) {
-    pointer_ = pointer;
-    user_count_ = new int(1);
+  if (user_count_ != nullptr) {
+    if (*user_count_ == 1) {
+      delete[] pointer_;
+      pointer_ = pointer;
+    } else {
+      --(*user_count_);
+      pointer_ = pointer;
+      user_count_ = new int(1);
+    }
   } else {
     pointer_ = pointer;
-    --(*user_count_);
     user_count_ = new int(1);
+  }
+}
+
+template <typename T>
+void SharedPointer<T>::Reset() {
+  if (user_count_ != nullptr) {
+    if (*user_count_ == 1) {
+      delete pointer_;
+      delete user_count_;
+      pointer_ = nullptr;
+      user_count_ = nullptr;
+    } else {
+      --(*user_count_);
+      pointer_ = nullptr;
+      user_count_ = nullptr;
+    }
+  }
+}
+
+template <typename T>
+void SharedPointer<T[]>::Reset() {
+  if (user_count_ != nullptr) {
+    if (*user_count_ == 1) {
+      delete[] pointer_;
+      delete user_count_;
+      pointer_ = nullptr;
+      user_count_ = nullptr;
+    } else {
+      --(*user_count_);
+      pointer_ = nullptr;
+      user_count_ = nullptr;
+    }
   }
 }
 
