@@ -82,7 +82,7 @@ class SharedPointer {
    * @param copy {const SharedPointer&} 被拷贝的对象
    * @return SharedPointer& 返回 *this
    */
-  SharedPointer& operator=(const SharedPointer&);
+  SharedPointer& operator=(const SharedPointer& copy);
 
   /**
    * @brief 移动赋值运算符
@@ -93,7 +93,7 @@ class SharedPointer {
    * @param move {SharedPointer&&} 被移动的对象
    * @return SharedPointer&  返回 *this
    */
-  SharedPointer& operator=(SharedPointer&&);
+  SharedPointer& operator=(SharedPointer&& move);
 
   /**
    * @brief 返回存放的指针
@@ -157,7 +157,7 @@ class SharedPointer {
    * 在计数为1的时候释放原资源，否则计数减1
    *
    */
-  void Reset(T*);
+  void Reset(T* pointer);
 
   /**
    * @brief 释放该指针的资源
@@ -210,8 +210,9 @@ class SharedPointer<T[]> {
     }
   }
 
-  SharedPointer& operator=(const SharedPointer&);
-  SharedPointer& operator=(SharedPointer&&);
+  SharedPointer& operator=(const SharedPointer& copy);
+  
+  SharedPointer& operator=(SharedPointer&& move);
 
   T* Get() { return pointer_; }
 
@@ -245,7 +246,7 @@ class SharedPointer<T[]> {
     }
   }
 
-  void Reset(T*);
+  void Reset(T* pointer);
 
   void Reset();
 

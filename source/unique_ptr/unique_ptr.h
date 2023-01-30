@@ -67,7 +67,7 @@ class UniquePointer {
    * @param move {Unique&&} 被移动的对象
    * @return UniquePointer& 返回 *this
    */
-  UniquePointer& operator=(UniquePointer&&);
+  UniquePointer& operator=(UniquePointer&& move);
 
   /**
    * @brief 返回存放的指针
@@ -145,7 +145,7 @@ class UniquePointer<T[]> {
 
   UniquePointer& operator=(const UniquePointer& copy) = delete;
 
-  UniquePointer& operator=(UniquePointer&&);
+  UniquePointer& operator=(UniquePointer&& move);
 
   T operator*() { return *pointer_; }
 
